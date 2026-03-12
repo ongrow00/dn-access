@@ -4,6 +4,22 @@ import type { CreateLeadRequest, CreateLeadResponse } from '@/types';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function isValidCpf(digits: string): boolean {
+  if (digits.length !== 11 || !/^\d{11}$/.test(digits)) return false;
+  if (/^(\d)\1{10}$/.test(digits)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(digits[i], 10) * (10 - i);
+  let rest = (sum * 10) % 11;
+  if (rest === 10) rest = 0;
+  if (rest !== parseInt(digits[9], 10)) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(digits[i], 10) * (11 - i);
+  rest = (sum * 10) % 11;
+  if (rest === 10) rest = 0;
+  if (rest !== parseInt(digits[10], 10)) return false;
+  return true;
+}
+
 function validateBody(body: unknown): { ok: true; data: CreateLeadRequest } | { ok: false; status: number; message: string } {
   if (!body || typeof body !== 'object') {
     return { ok: false, status: 400, message: 'Body inválido.' };
@@ -27,6 +43,9 @@ function validateBody(body: unknown): { ok: true; data: CreateLeadRequest } | { 
   const cpfDigits = cpf.replace(/\D/g, '');
   if (cpfDigits.length !== 11 || !/^\d{11}$/.test(cpfDigits)) {
     return { ok: false, status: 400, message: 'CPF inválido. Digite os 11 números.' };
+  }
+  if (!isValidCpf(cpfDigits)) {
+    return { ok: false, status: 400, message: 'CPF inválido. Verifique os números digitados.' };
   }
   return {
     ok: true,
@@ -98,13 +117,25 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('[api/lead] Supabase error:', error);
-      const isDev = process.env.NODE_ENV === 'development';
+      const isUniqueViolation = error.code === '23505';
+      const isUndefinedTable = error.code === '42P01';
+      const isUndefinedColumn = error.code === '42703';
+      let userMessage: string;
+      if (isUniqueViolation) {
+        userMessage = 'Este e-mail e CPF já estão cadastrados. Use o código de verificação que você recebeu.';
+      } else if (isUndefinedTable || isUndefinedColumn) {
+        userMessage =
+          'Erro de configuração do banco: tabela ou coluna não encontrada. Rode as migrations do Supabase (incluindo 003_add_cpf_lead_physical_case).';
+      } else {
+        userMessage = 'Erro ao registrar. Tente novamente.';
+      }
       return NextResponse.json(
         {
-          error: 'Erro ao registrar. Tente novamente.',
-          ...(isDev && { detail: error.message, code: error.code }),
+          error: userMessage,
+          code: error.code,
+          ...(process.env.NODE_ENV === 'development' && { detail: error.message }),
         },
-        { status: 500 }
+        { status: isUniqueViolation ? 409 : 500 }
       );
     }
 
@@ -112,12 +143,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response, { status: 201 });
   } catch (e) {
     console.error('[api/lead]', e);
-    const isDev = process.env.NODE_ENV === 'development';
     const message = e instanceof Error ? e.message : 'Erro desconhecido';
+    const isMissingEnv = typeof message === 'string' && message.includes('Missing Supabase');
+    const userMessage = isMissingEnv
+      ? 'Variáveis de ambiente do Supabase não configuradas (NEXT_PUBLIC_SUPABASE_URL e SERVICE_ROLE_KEY). Configure em Workers & Pages → dn-access → Settings → Environment variables.'
+      : 'Erro ao registrar. Tente novamente.';
     return NextResponse.json(
       {
-        error: 'Erro ao registrar. Tente novamente.',
-        ...(isDev && { detail: message }),
+        error: userMessage,
+        ...(process.env.NODE_ENV === 'development' && { detail: message }),
       },
       { status: 500 }
     );

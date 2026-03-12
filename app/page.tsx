@@ -33,7 +33,9 @@ export default function AccessPage() {
       const json = await res.json();
       if (!res.ok) {
         const msg = json.error ?? 'Erro ao enviar. Tente novamente.';
-        setError(json.detail ? `${msg} — ${json.detail}` : msg);
+        const withDetail = json.detail ? `${msg} — ${json.detail}` : msg;
+        const withCode = json.code ? `${withDetail} (código: ${json.code})` : withDetail;
+        setError(withCode);
         return;
       }
       setLeadId(json.leadId);

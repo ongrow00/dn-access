@@ -94,15 +94,25 @@ export default function LeadFormStep1({
     formatCpf((initialData.cpf ?? '').replace(/\D/g, ''))
   );
   const [fieldError, setFieldError] = useState<string | null>(null);
+  /** No iOS/Safari o autofill ignora autocomplete="off". Campos readonly não disparam autofill; removemos no foco. */
+  const [inputReady, setInputReady] = useState({ name: false, email: false, phone: false, cpf: false });
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setFieldError(null);
 
-    const nameTrim = name.trim();
-    const emailTrim = email.trim();
-    const phoneTrim = phone.replace(/\D/g, '');
-    const cpfDigits = cpf.replace(/\D/g, '');
+    const form = e.currentTarget;
+    const getName = () => (form.elements.namedItem('lead-name') as HTMLInputElement | null)?.value ?? '';
+    const getEmail = () => (form.elements.namedItem('lead-email') as HTMLInputElement | null)?.value ?? '';
+    const getPhone = () => (form.elements.namedItem('lead-phone') as HTMLInputElement | null)?.value ?? '';
+    const getCpf = () => (form.elements.namedItem('lead-cpf') as HTMLInputElement | null)?.value ?? '';
+
+    const nameTrim = (getName() || name).trim();
+    const emailTrim = (getEmail() || email).trim();
+    const phoneVal = getPhone() || phone;
+    const phoneTrim = phoneVal.replace(/\D/g, '');
+    const cpfFormatted = getCpf() || cpf;
+    const cpfDigits = cpfFormatted.replace(/\D/g, '');
 
     if (!nameTrim) {
       setFieldError(VALIDATION.nameRequired);
@@ -120,7 +130,8 @@ export default function LeadFormStep1({
       setFieldError(VALIDATION.phoneRequired);
       return;
     }
-    if (!PHONE_PATTERN.test(phone)) {
+    const phoneFormatted = formatPhoneBR(phoneTrim);
+    if (!PHONE_PATTERN.test(phoneFormatted)) {
       setFieldError(VALIDATION.phoneInvalid);
       return;
     }
@@ -136,7 +147,7 @@ export default function LeadFormStep1({
     await onSubmit({
       name: nameTrim,
       email: emailTrim,
-      phone: phone.trim(),
+      phone: phoneFormatted,
       cpf: cpfDigits,
     });
   }
@@ -165,11 +176,15 @@ export default function LeadFormStep1({
           className={inputClass}
           value={name}
           onChange={(e) => { setName(e.target.value); setFieldError(null); }}
+          onFocus={() => setInputReady((r) => ({ ...r, name: true }))}
           placeholder="Seu nome"
-          autoComplete="off"
+          autoComplete="nope"
           name="lead-name"
+          readOnly={!inputReady.name}
           required
           disabled={loading}
+          data-lpignore
+          data-form-type="other"
         />
       </label>
       <label className={fieldClass}>
@@ -179,11 +194,15 @@ export default function LeadFormStep1({
           className={inputClass}
           value={email}
           onChange={(e) => { setEmail(e.target.value); setFieldError(null); }}
+          onFocus={() => setInputReady((r) => ({ ...r, email: true }))}
           placeholder="seu@email.com"
-          autoComplete="off"
+          autoComplete="nope"
           name="lead-email"
+          readOnly={!inputReady.email}
           required
           disabled={loading}
+          data-lpignore
+          data-form-type="other"
         />
       </label>
       <label className={fieldClass}>
@@ -193,13 +212,17 @@ export default function LeadFormStep1({
           className={inputClass}
           value={phone}
           onChange={(e) => { setPhone(formatPhoneBR(e.target.value)); setFieldError(null); }}
+          onFocus={() => setInputReady((r) => ({ ...r, phone: true }))}
           placeholder="(00) 00000-0000"
-          autoComplete="off"
+          autoComplete="nope"
           name="lead-phone"
+          readOnly={!inputReady.phone}
           required
           disabled={loading}
           maxLength={16}
           title="Telefone: (00) 00000-0000 ou (00) 0000-0000"
+          data-lpignore
+          data-form-type="other"
         />
       </label>
       <label className={fieldClass}>
@@ -209,14 +232,18 @@ export default function LeadFormStep1({
           className={inputClass}
           value={cpf}
           onChange={(e) => { setCpf(formatCpf(e.target.value)); setFieldError(null); }}
+          onFocus={() => setInputReady((r) => ({ ...r, cpf: true }))}
           placeholder="000.000.000-00"
-          autoComplete="off"
+          autoComplete="nope"
           name="lead-cpf"
+          readOnly={!inputReady.cpf}
           inputMode="numeric"
           required
           disabled={loading}
           maxLength={14}
           title="CPF: 11 números"
+          data-lpignore
+          data-form-type="other"
         />
       </label>
       {showError && (
