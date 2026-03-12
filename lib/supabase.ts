@@ -16,7 +16,7 @@ export function getSupabase(): SupabaseClient {
     if (missing.length > 0) {
       throw new Error('Missing Supabase env: ' + missing.join(', '));
     }
-    _client = createClient(url.trim(), key.trim());
+    _client = createClient(url!.trim(), key!.trim());
   }
   return _client;
 }
