@@ -34,3 +34,9 @@ Thumbs.db
 
 # Supabase local
 supabase/.temp
+
+# OpenNext build output
+.open-next/
+
+# Cloudflare local secrets
+.dev.vars

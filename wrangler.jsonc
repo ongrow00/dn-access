@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dn-access",
+  "compatibility_date": "2025-09-27",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": ".open-next/worker.js",
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://jwpupvjnvzshdyuyudws.supabase.co",
+    "CADEMI_POSTBACK_URL": "https://6471au.cademi.com.br/api/postback/custom"
+  }
+  // Secrets (não versionar valores):
+  // wrangler secret put SERVICE_ROLE_KEY
+  // wrangler secret put CADEMI_TOKEN
+}
