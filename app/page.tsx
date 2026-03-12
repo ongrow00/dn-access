@@ -131,6 +131,8 @@ export default function AccessPage() {
                     width={200}
                     height={200}
                     className="object-contain opacity-60"
+                    style={{ width: 'auto', height: 'auto' }}
+                    priority
                   />
                 </div>
                 <h1 className="text-[22px] leading-[22px] font-semibold text-[rgba(196,196,196,1)] mb-2 text-center">

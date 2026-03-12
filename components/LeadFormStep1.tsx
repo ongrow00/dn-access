@@ -123,7 +123,13 @@ export default function LeadFormStep1({
   const showError = fieldError ?? error;
 
   return (
-    <form onSubmit={handleSubmit} className={formClass} noValidate>
+    <form
+      onSubmit={handleSubmit}
+      className={formClass}
+      noValidate
+      autoComplete="off"
+      data-form-type="other"
+    >
       <label className={fieldClass}>
         <span className={labelClass}>Nome</span>
         <input
@@ -132,7 +138,8 @@ export default function LeadFormStep1({
           value={name}
           onChange={(e) => { setName(e.target.value); setFieldError(null); }}
           placeholder="Seu nome"
-          autoComplete="name"
+          autoComplete="off"
+          name="lead-name"
           required
           disabled={loading}
         />
@@ -145,7 +152,8 @@ export default function LeadFormStep1({
           value={email}
           onChange={(e) => { setEmail(e.target.value); setFieldError(null); }}
           placeholder="seu@email.com"
-          autoComplete="email"
+          autoComplete="off"
+          name="lead-email"
           required
           disabled={loading}
         />
@@ -158,7 +166,8 @@ export default function LeadFormStep1({
           value={phone}
           onChange={(e) => { setPhone(formatPhoneBR(e.target.value)); setFieldError(null); }}
           placeholder="(00) 00000-0000"
-          autoComplete="tel"
+          autoComplete="off"
+          name="lead-phone"
           required
           disabled={loading}
           maxLength={16}
@@ -174,6 +183,7 @@ export default function LeadFormStep1({
           onChange={(e) => { setCpf(formatCpf(e.target.value)); setFieldError(null); }}
           placeholder="000.000.000-00"
           autoComplete="off"
+          name="lead-cpf"
           inputMode="numeric"
           required
           disabled={loading}
