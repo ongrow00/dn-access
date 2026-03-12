@@ -94,8 +94,6 @@ export default function LeadFormStep1({
     formatCpf((initialData.cpf ?? '').replace(/\D/g, ''))
   );
   const [fieldError, setFieldError] = useState<string | null>(null);
-  /** No iOS/Safari o autofill ignora autocomplete="off". Campos readonly não disparam autofill; removemos no foco. */
-  const [inputReady, setInputReady] = useState({ name: false, email: false, phone: false, cpf: false });
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -176,11 +174,9 @@ export default function LeadFormStep1({
           className={inputClass}
           value={name}
           onChange={(e) => { setName(e.target.value); setFieldError(null); }}
-          onFocus={() => setInputReady((r) => ({ ...r, name: true }))}
           placeholder="Seu nome"
           autoComplete="nope"
           name="lead-name"
-          readOnly={!inputReady.name}
           required
           disabled={loading}
           data-lpignore
@@ -194,11 +190,9 @@ export default function LeadFormStep1({
           className={inputClass}
           value={email}
           onChange={(e) => { setEmail(e.target.value); setFieldError(null); }}
-          onFocus={() => setInputReady((r) => ({ ...r, email: true }))}
           placeholder="seu@email.com"
           autoComplete="nope"
           name="lead-email"
-          readOnly={!inputReady.email}
           required
           disabled={loading}
           data-lpignore
@@ -212,11 +206,9 @@ export default function LeadFormStep1({
           className={inputClass}
           value={phone}
           onChange={(e) => { setPhone(formatPhoneBR(e.target.value)); setFieldError(null); }}
-          onFocus={() => setInputReady((r) => ({ ...r, phone: true }))}
           placeholder="(00) 00000-0000"
           autoComplete="nope"
           name="lead-phone"
-          readOnly={!inputReady.phone}
           required
           disabled={loading}
           maxLength={16}
@@ -232,11 +224,9 @@ export default function LeadFormStep1({
           className={inputClass}
           value={cpf}
           onChange={(e) => { setCpf(formatCpf(e.target.value)); setFieldError(null); }}
-          onFocus={() => setInputReady((r) => ({ ...r, cpf: true }))}
           placeholder="000.000.000-00"
           autoComplete="nope"
           name="lead-cpf"
-          readOnly={!inputReady.cpf}
           inputMode="numeric"
           required
           disabled={loading}
