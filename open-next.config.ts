@@ -1,6 +1,8 @@
 import type { OpenNextConfig } from "@opennextjs/cloudflare";
 
 const config: OpenNextConfig = {
+  // Evita loop: OpenNext chama este comando em vez de "npm run build" (que seria opennext de novo)
+  buildCommand: "npx next build",
   default: {
     override: {
       wrapper: "cloudflare-node",
