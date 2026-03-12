@@ -1,0 +1,12 @@
+name = "dn-access"
+compatibility_date = "2025-09-27"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://jwpupvjnvzshdyuyudws.supabase.co"
+CADEMI_POSTBACK_URL = "https://6471au.cademi.com.br/api/postback/custom"
+
+# Secrets (não commitar valores — configurar via dashboard ou CLI):
+# wrangler pages secret put SERVICE_ROLE_KEY
+# wrangler pages secret put CADEMI_TOKEN

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
+import { getEnv } from '@/lib/env';
 import type { ValidateCodeRequest, ValidateCodeSuccessResponse } from '@/types';
 
 const CODE_LENGTH = 8;
@@ -36,21 +37,19 @@ function normalizePhone(phone: string): string {
  * Payload: application/x-www-form-urlencoded.
  * Se CADEMI_POSTBACK_URL ou CADEMI_TOKEN não estiverem definidos, não envia e retorna ok: true.
  */
-async function sendCademiPostback(params: {
-  codigoUnico: string;
-  produtoId: string;
-  produtoNome: string;
-  clienteEmail: string;
-  clienteNome: string;
-  clienteCelular: string;
-  clienteDoc: string | null;
-}): Promise<{ ok: boolean }> {
-  const url = process.env.CADEMI_POSTBACK_URL;
-  const token = process.env.CADEMI_TOKEN;
-  if (!url || !token) {
-    console.warn('[api/validate-code] CADEMI_POSTBACK_URL ou CADEMI_TOKEN não definidos, pulando postback Cademi');
-    return { ok: true };
-  }
+async function sendCademiPostback(
+  params: {
+    codigoUnico: string;
+    produtoId: string;
+    produtoNome: string;
+    clienteEmail: string;
+    clienteNome: string;
+    clienteCelular: string;
+    clienteDoc: string | null;
+  },
+  url: string,
+  token: string,
+): Promise<{ ok: boolean }> {
   const body = new URLSearchParams({
     token,
     codigo: params.codigoUnico,
@@ -138,15 +137,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cademiOk = await sendCademiPostback({
-      codigoUnico: row.id,
-      produtoId: row.product_id,
-      produtoNome: row.product_name ?? '',
-      clienteEmail: lead.email,
-      clienteNome: lead.name,
-      clienteCelular: lead.phone,
-      clienteDoc: lead.cpf ?? null,
-    });
+    const cademiUrl = getEnv('CADEMI_POSTBACK_URL');
+    const cademiToken = getEnv('CADEMI_TOKEN');
+    if (!cademiUrl || !cademiToken) {
+      console.warn('[api/validate-code] CADEMI_POSTBACK_URL ou CADEMI_TOKEN não definidos, pulando postback Cademi');
+      return NextResponse.json(
+        { error: 'Configuração de entrega incompleta. Contate o suporte.' },
+        { status: 503 }
+      );
+    }
+
+    const cademiOk = await sendCademiPostback(
+      {
+        codigoUnico: row.id,
+        produtoId: row.product_id,
+        produtoNome: row.product_name ?? '',
+        clienteEmail: lead.email,
+        clienteNome: lead.name,
+        clienteCelular: lead.phone,
+        clienteDoc: lead.cpf ?? null,
+      },
+      cademiUrl,
+      cademiToken,
+    );
     if (!cademiOk.ok) {
       return NextResponse.json(
         { error: 'Falha ao processar. Tente novamente.' },
