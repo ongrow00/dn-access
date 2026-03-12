@@ -19,6 +19,29 @@ function formatCpf(value: string): string {
   return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
 }
 
+/**
+ * Valida CPF pelo algoritmo oficial (Receita Federal).
+ * Verifica: 11 dígitos, não sequência repetida, e os dois dígitos verificadores.
+ */
+function isValidCpf(digits: string): boolean {
+  if (digits.length !== 11 || !/^\d{11}$/.test(digits)) return false;
+  if (/^(\d)\1{10}$/.test(digits)) return false;
+
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(digits[i], 10) * (10 - i);
+  let rest = (sum * 10) % 11;
+  if (rest === 10) rest = 0;
+  if (rest !== parseInt(digits[9], 10)) return false;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(digits[i], 10) * (11 - i);
+  rest = (sum * 10) % 11;
+  if (rest === 10) rest = 0;
+  if (rest !== parseInt(digits[10], 10)) return false;
+
+  return true;
+}
+
 const PHONE_PATTERN = /^\(\d{2}\) \d{4,5}-\d{4}$/;
 const CPF_LENGTH = 11;
 
@@ -35,7 +58,8 @@ const VALIDATION = {
   phoneRequired: 'Preencha o telefone no formato (00) 00000-0000.',
   phoneInvalid: 'Telefone inválido. Use o formato (00) 00000-0000 ou (00) 0000-0000.',
   cpfRequired: 'Preencha o CPF.',
-  cpfInvalid: 'CPF inválido. Digite os 11 números.',
+  cpfInvalidLength: 'CPF inválido. Digite os 11 números.',
+  cpfInvalidChecksum: 'CPF inválido. Verifique os números digitados.',
 } as const;
 
 export interface LeadFormStep1Data {
@@ -101,7 +125,11 @@ export default function LeadFormStep1({
       return;
     }
     if (cpfDigits.length !== CPF_LENGTH) {
-      setFieldError(VALIDATION.cpfInvalid);
+      setFieldError(VALIDATION.cpfInvalidLength);
+      return;
+    }
+    if (!isValidCpf(cpfDigits)) {
+      setFieldError(VALIDATION.cpfInvalidChecksum);
       return;
     }
 
